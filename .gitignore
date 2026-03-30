@@ -1,0 +1,8 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+parameters.txt
+__pycache__
+Include
+Lib
+Scripts
+envio_movimientos.log
+pyvenv.cfg
