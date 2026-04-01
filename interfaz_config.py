@@ -14,7 +14,7 @@ class ConfiguracionApp:
         self.monitor_thread = None
         self.detener_evento = None
         self.monitor_activo = False
-        
+        self.inicio_automatico = False  # Flag para controlar inicio automático
         # Archivo de configuración
         self.config_file = "parameters.txt"
         
@@ -26,7 +26,11 @@ class ConfiguracionApp:
         
         # Cargar valores actuales
         self.cargar_valores_interfaz()
-    
+        
+        # Iniciar monitoreo automáticamente si está configurado
+        if self.config.get("inicio_automatico", False):
+            self.iniciar_monitoreo()
+
     def cargar_configuracion(self):
         """Cargar configuración desde parameters.txt"""
         config_default = {
@@ -157,8 +161,21 @@ class ConfiguracionApp:
         main_frame.rowconfigure(9, weight=1)
         self.root.rowconfigure(0, weight=1)
     
+        # Variable para el checkbox
+        self.inicio_auto_var = tk.BooleanVar(value=False)
+
+        # Checkbox para inicio automático
+        self.chk_inicio_auto = ttk.Checkbutton(
+            main_frame, 
+            text="Iniciar monitoreo automáticamente al abrir la aplicación", 
+            variable=self.inicio_auto_var
+        )
+        self.chk_inicio_auto.grid(row=8, column=0, columnspan=3, sticky=tk.W, pady=5)
+
+
     def cargar_valores_interfaz(self):
         """Cargar valores desde self.config a la interfaz"""
+        self.inicio_auto_var.set(self.config.get("inicio_automatico", False))
         self.ruta_dbf_var.set(self.config.get("ruta_dbf", ""))
         self.api_url_var.set(self.config.get("api_url", ""))
         
@@ -182,7 +199,8 @@ class ConfiguracionApp:
             self.config["intervalo_segundos"] = int(float(self.intervalo_var.get()) * 60)
             self.config["log_level"] = self.log_level_var.get()
             self.config["timeout_segundos"] = int(self.timeout_var.get())
-            
+            self.config["inicio_automatico"] = self.inicio_auto_var.get()
+
             if self.guardar_configuracion():
                 messagebox.showinfo("Éxito", "Configuración guardada correctamente")
         except ValueError as e:
