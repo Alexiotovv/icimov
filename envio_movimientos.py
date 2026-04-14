@@ -10,6 +10,7 @@ from dbfread import DBF
 class EnvioMovimientos:
     def __init__(self, ruta_dbf, api_url, intervalo_segundos=300, log_level="INFO", timeout_segundos=30):
         self.ruta_dbf = ruta_dbf
+        self.backup_dir = os.path.join(self.ruta_dbf, "tmovim_backup")  # Corregido: usar self.ruta_dbf directamente
         self.api_url = api_url
         self.intervalo_segundos = intervalo_segundos
         self.timeout_segundos = timeout_segundos
@@ -228,12 +229,14 @@ class EnvioMovimientos:
     
     def procesar_archivos(self):
         """Procesar archivos DBF y enviar registro por registro"""
+        self.crear_copia_seguridad()
+
         # Obtener último registro enviado
         ultimo_enviado = self.leer_ultimo_registro()
         
         # Leer movimientos y detalles
-        mov_path = os.path.join(self.ruta_dbf, "tmovim.dbf")
-        det_path = os.path.join(self.ruta_dbf, "tmovimdet.dbf")
+        mov_path = os.path.join(self.backup_dir, "tmovim_backup.dbf")
+        det_path = os.path.join(self.backup_dir, "tmovimdet_backup.dbf")
         
         if not os.path.exists(mov_path):
             logging.error(f"No se encuentra el archivo: {mov_path}")
@@ -319,7 +322,44 @@ class EnvioMovimientos:
                 time.sleep(60)
 
                 
-
+    def crear_copia_seguridad(self):
+        """Crear copia de los archivos DBF originales"""
+        import shutil
+        
+        # Archivos originales
+        mov_original = os.path.join(self.ruta_dbf, "tmovim.dbf")
+        det_original = os.path.join(self.ruta_dbf, "tmovimdet.dbf")
+        
+        # Crear directorio de backup si no existe
+        if not os.path.exists(self.backup_dir):
+            os.makedirs(self.backup_dir)
+            logging.info(f"Creado directorio de backup: {self.backup_dir}")
+        
+        # Copiar tmovim.dbf
+        mov_backup = os.path.join(self.backup_dir, "tmovim_backup.dbf")
+        if os.path.exists(mov_original):
+            try:
+                shutil.copy2(mov_original, mov_backup)
+                logging.info(f"Copia creada: {mov_backup}")
+            except Exception as e:
+                logging.error(f"Error al copiar {mov_original}: {e}")
+                raise
+        else:
+            logging.error(f"No se encuentra el archivo original: {mov_original}")
+            raise Exception(f"No se encuentra {mov_original}")
+        
+        # Copiar tmovimdet.dbf
+        det_backup = os.path.join(self.backup_dir, "tmovimdet_backup.dbf")
+        if os.path.exists(det_original):
+            try:
+                shutil.copy2(det_original, det_backup)
+                logging.info(f"Copia creada: {det_backup}")
+            except Exception as e:
+                logging.error(f"Error al copiar {det_original}: {e}")
+                raise
+        else:
+            logging.warning(f"No se encuentra el archivo de detalles: {det_original}")
+            # No es crítico, puede que no exista
 
 
 
